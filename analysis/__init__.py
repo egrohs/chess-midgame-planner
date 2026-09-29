@@ -3,6 +3,7 @@
 from analysis.board_render import move_hints, render_board
 from analysis.center import analyze_center
 from analysis.development import analyze_development
+from analysis.king_safety import analyze_king_safety
 from analysis.material import analyze_material
 from analysis.outposts import analyze_outposts
 from analysis.pawn_majority import analyze_pawn_majority
@@ -23,6 +24,7 @@ CRITERIA = (
     analyze_outposts,
     analyze_space,
     analyze_piece_activity,
+    analyze_king_safety,
 )
 
 
@@ -42,6 +44,7 @@ __all__ = [
     "analyze_outposts",
     "analyze_space",
     "analyze_piece_activity",
+    "analyze_king_safety",
     "analyze_pawn_majority",
     "analyze_pawn_structure",
     "analyze_position",

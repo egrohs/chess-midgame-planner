@@ -47,6 +47,7 @@ LAYER_LABELS = {
     "outposts": "Outposts",
     "space": "Espaço",
     "piece_activity": "Atividade",
+    "king_safety": "Segurança do rei",
 }
 
 STANCE_ICONS = {

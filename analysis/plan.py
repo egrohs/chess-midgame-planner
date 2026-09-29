@@ -19,6 +19,7 @@ WEIGHTS = {
     "outposts": 1.1,
     "space": 1.1,
     "piece_activity": 1.2,
+    "king_safety": 1.5,
 }
 
 

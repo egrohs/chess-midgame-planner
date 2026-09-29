@@ -28,6 +28,7 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 | 7 | Outposts | Postos potenciais na metade adversária, apoiados por peão e não expulsáveis por peões; identifica os já ocupados por peça menor |
 | 8 | Espaço | Casas ocupadas/controladas na metade adversária sem ataque de peões rivais e mobilidade média das peças (estimativa geométrica, não lances legais) |
 | 9 | Atividade das peças | Destinos vazios de cavalos, bispos, torres e damas, ponderados por centralidade, apoio de peão e contestação adversária; média por peça para separar atividade de vantagem material |
+| 10 | Segurança do rei | Escudo de peões, colunas próximas sem peão próprio, atacantes na zona do rei, xeque e casas de fuga seguras |
 
 Cada critério devolve: veredito, métricas, observações, planos para brancas e pretas,
 casas destacadas e setas no tabuleiro. O plano final combina os critérios por peso
@@ -37,6 +38,11 @@ Em **Atividade**, a camada destaca a peça mais ativa de cada lado e, em laranja
 as peças com poucas opções úteis. O índice não calcula lances legais nem a
 segurança tática de cada movimento: casas atacadas por peões são descartadas,
 e as contestadas por outras peças recebem peso menor.
+
+Em **Segurança do rei**, a camada mostra o escudo, as lacunas à frente do
+rei, casas de fuga e setas dos atacantes. Colunas sem peão próprio só pesam
+quando ainda há torres ou damas adversárias; a contagem de fugas independe
+de quem joga e não substitui o cálculo de mate.
 
 ## Indicadores visuais
 
@@ -99,6 +105,7 @@ chess-midgame-planner/
 │   ├── outposts.py           # critério 7
 │   ├── space.py              # critério 8
 │   ├── piece_activity.py     # critério 9
+│   ├── king_safety.py        # critério 10
 │   ├── board_render.py       # SVG com destaques, setas e dicas de lance
 │   └── plan.py               # consolidação em plano de jogo
 └── tests/
@@ -109,5 +116,5 @@ chess-midgame-planner/
 
 ## Próximos critérios (maior complexidade)
 
-Bom vs. mau bispo, colunas abertas e semiabertas, segurança do rei,
-iniciativa e peças sobrecarregadas.
+Bom vs. mau bispo, colunas abertas e semiabertas, iniciativa e peças
+sobrecarregadas.

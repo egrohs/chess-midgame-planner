@@ -4,6 +4,7 @@ import pytest
 from analysis import analyze_position, overall_score, render_board
 from analysis.center import classify_center
 from analysis.development import development_score, undeveloped_minors
+from analysis.king_safety import analyze_king_safety, analyze_king_safety_for
 from analysis.material import count_material, material_value
 from analysis.outposts import analyze_outposts_for, is_outpost
 from analysis.pawn_majority import count_wing_pawns
@@ -109,6 +110,7 @@ def test_analyze_position_runs_all_criteria():
         "outposts",
         "space",
         "piece_activity",
+        "king_safety",
     ]
     assert overall_score(results) == pytest.approx(0.0, abs=1e-9)
 
@@ -336,6 +338,63 @@ def test_activity_reverses_with_mirror_and_marks_restricted_pieces():
     assert analyze_piece_activity(board.mirror()).score == pytest.approx(-report.score)
     assert report.white_plans and report.black_plans
     assert set(report.highlights) <= set(board.piece_map())
+
+
+def test_king_safety_initial_position_is_symmetric_with_full_shields():
+    board = chess.Board()
+    white = analyze_king_safety_for(board, chess.WHITE)
+    black = analyze_king_safety_for(board, chess.BLACK)
+    assert len(white.shield) == len(black.shield) == 3
+    assert not white.missing_shield and not black.missing_shield
+    assert not white.exposed_files and not white.attackers
+    assert white.escapes == []
+    assert analyze_king_safety(board).score == 0
+    board.turn = chess.BLACK
+    assert analyze_king_safety(board).score == 0
+
+
+def test_king_safety_opening_file_and_losing_shield_raise_danger():
+    sheltered = chess.Board("4k1r1/8/8/8/8/8/5PPP/6K1 w - - 0 1")
+    exposed = sheltered.copy()
+    exposed.remove_piece_at(chess.G2)
+    before = analyze_king_safety_for(sheltered, chess.WHITE)
+    after = analyze_king_safety_for(exposed, chess.WHITE)
+    assert chess.G2 in before.shield
+    assert chess.G2 in after.missing_shield
+    assert chess.square_file(chess.G1) in after.exposed_files
+    assert after.in_check and not before.in_check
+    assert after.danger > before.danger
+    assert analyze_king_safety(exposed).score < analyze_king_safety(sheltered).score
+    assert any(arrow.tail == chess.G8 for arrow in analyze_king_safety(exposed).arrows)
+
+
+def test_king_safety_escape_checks_attacks_after_moving_king():
+    board = chess.Board("4k3/8/8/8/8/8/8/r3K3 w - - 0 1")
+    report = analyze_king_safety_for(board, chess.WHITE)
+    assert chess.D1 not in report.escapes
+    assert chess.F1 not in report.escapes
+    assert chess.E2 in report.escapes
+
+
+def test_king_safety_cannot_capture_defended_piece_to_escape():
+    board = chess.Board("4k3/8/8/8/2b5/8/4r3/4K3 w - - 0 1")
+    assert chess.E2 not in analyze_king_safety_for(board, chess.WHITE).escapes
+
+
+def test_king_safety_endgame_does_not_require_pawn_shield():
+    board = chess.Board("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+    white = analyze_king_safety_for(board, chess.WHITE)
+    assert white.danger == 0
+    assert not white.missing_shield and not white.exposed_files
+    assert len(white.escapes) == 5
+    assert analyze_king_safety(board).score == 0
+
+
+def test_king_safety_mirror_reverses_score():
+    board = chess.Board("4k1r1/8/8/8/8/8/5P1P/6K1 w - - 0 1")
+    result = analyze_king_safety(board)
+    assert analyze_king_safety(board.mirror()).score == pytest.approx(-result.score)
+    assert result.white_plans and result.black_plans
 
 
 def test_render_board_produces_svg_with_highlights():
