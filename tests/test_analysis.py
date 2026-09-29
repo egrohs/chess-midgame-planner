@@ -8,6 +8,7 @@ from analysis.material import count_material, material_value
 from analysis.outposts import analyze_outposts_for, is_outpost
 from analysis.pawn_majority import count_wing_pawns
 from analysis.pawn_structure import analyze_structure
+from analysis.piece_activity import analyze_activity_for, analyze_piece_activity
 from analysis.space import analyze_space, analyze_space_for
 from analysis.weak_squares import analyze_weak_squares_for, is_neutralized, is_weak_square
 
@@ -107,6 +108,7 @@ def test_analyze_position_runs_all_criteria():
         "weak_squares",
         "outposts",
         "space",
+        "piece_activity",
     ]
     assert overall_score(results) == pytest.approx(0.0, abs=1e-9)
 
@@ -274,6 +276,66 @@ def test_space_mobility_decreases_when_enemy_pawn_restricts_piece():
 def test_space_mobility_excludes_friendly_occupied_targets():
     board = chess.Board("4k3/8/8/8/3N4/8/2P5/4K3 w - - 0 1")
     assert analyze_space_for(board, chess.WHITE).mobility == 7
+
+
+def test_activity_balanced_at_start_and_independent_of_turn():
+    board = chess.Board()
+    assert analyze_piece_activity(board).score == 0
+    board.turn = chess.BLACK
+    assert analyze_piece_activity(board).score == 0
+
+
+def test_activity_prefers_central_quality_for_equal_geometric_mobility():
+    central = chess.Board("4k3/8/8/8/3N4/8/8/4K3 w - - 0 1")
+    peripheral = chess.Board("4k3/8/8/8/2N5/8/8/4K3 w - - 0 1")
+    good = analyze_activity_for(central, chess.WHITE).pieces[0]
+    edge = analyze_activity_for(peripheral, chess.WHITE).pieces[0]
+    assert len(central.attacks(chess.D4)) == len(peripheral.attacks(chess.C4)) == 8
+    assert good.quality > edge.quality
+
+
+def test_activity_penalizes_pawn_attacked_destinations():
+    board = chess.Board("4k3/8/6p1/8/3N4/8/8/4K3 w - - 0 1")
+    under_pressure = analyze_activity_for(board, chess.WHITE).pieces[0]
+    board.remove_piece_at(chess.G6)
+    free = analyze_activity_for(board, chess.WHITE).pieces[0]
+    assert under_pressure.destinations == free.destinations - 1
+    assert under_pressure.quality < free.quality
+
+
+def test_activity_rewards_supported_post_and_penalizes_exposed_post():
+    board = chess.Board("4k3/8/8/5N2/4P3/8/8/4K3 w - - 0 1")
+    supported = analyze_activity_for(board, chess.WHITE).pieces[0]
+    board.remove_piece_at(chess.E4)
+    unsupported = analyze_activity_for(board, chess.WHITE).pieces[0]
+    assert supported.quality > unsupported.quality
+
+    board.set_piece_at(chess.G6, chess.Piece(chess.PAWN, chess.BLACK))
+    exposed = analyze_activity_for(board, chess.WHITE).pieces[0]
+    assert exposed.quality < unsupported.quality
+
+
+def test_activity_penalizes_contested_destinations_without_inventing_safe_moves():
+    board = chess.Board("4k3/8/8/8/3N4/8/4r3/4K3 w - - 0 1")
+    contested = analyze_activity_for(board, chess.WHITE).pieces[0]
+    board.remove_piece_at(chess.E2)
+    uncontested = analyze_activity_for(board, chess.WHITE).pieces[0]
+    assert contested.quality < uncontested.quality
+
+
+def test_activity_with_no_mobile_pieces_has_no_material_proxy():
+    board = chess.Board("4k3/8/8/8/3N4/8/8/4K3 w - - 0 1")
+    report = analyze_piece_activity(board)
+    assert report.score == 0
+    assert any("nenhuma peça" in finding for finding in report.findings)
+
+
+def test_activity_reverses_with_mirror_and_marks_restricted_pieces():
+    board = chess.Board("4k2r/8/8/8/3N4/8/8/R3K3 w - - 0 1")
+    report = analyze_piece_activity(board)
+    assert analyze_piece_activity(board.mirror()).score == pytest.approx(-report.score)
+    assert report.white_plans and report.black_plans
+    assert set(report.highlights) <= set(board.piece_map())
 
 
 def test_render_board_produces_svg_with_highlights():

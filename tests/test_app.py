@@ -20,7 +20,7 @@ def run_app() -> AppTest:
 
 def test_app_runs_without_exception():
     at = run_app()
-    assert len(at.tabs) == 8
+    assert len(at.tabs) == 9
     assert at.session_state.mode == "Mover peças"
 
 
@@ -138,7 +138,15 @@ def test_space_layer_can_be_selected():
     at.pills(key="layers").set_value(["space"]).run()
     assert not at.exception, [e.message for e in at.exception]
     assert at.session_state.layers == ["space"]
-    assert at.tabs[-1].label == "8. Espaço"
+    assert at.tabs[-2].label == "8. Espaço"
+
+
+def test_activity_layer_can_be_selected():
+    at = run_app()
+    at.pills(key="layers").set_value(["piece_activity"]).run()
+    assert not at.exception, [e.message for e in at.exception]
+    assert at.session_state.layers == ["piece_activity"]
+    assert at.tabs[-1].label == "9. Atividade das peças"
 
 
 def test_editing_board_updates_fen_field():

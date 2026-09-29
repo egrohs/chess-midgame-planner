@@ -18,6 +18,7 @@ WEIGHTS = {
     "weak_squares": 1.1,
     "outposts": 1.1,
     "space": 1.1,
+    "piece_activity": 1.2,
 }
 
 

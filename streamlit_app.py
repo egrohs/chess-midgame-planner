@@ -46,6 +46,7 @@ LAYER_LABELS = {
     "weak_squares": "Casas fracas",
     "outposts": "Outposts",
     "space": "Espaço",
+    "piece_activity": "Atividade",
 }
 
 STANCE_ICONS = {

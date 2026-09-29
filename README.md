@@ -27,10 +27,16 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 | 6 | Casas fracas | Casas da 3ª e 4ª fileiras próprias que os peões não podem mais defender; distingue fraqueza neutralizada de explorável |
 | 7 | Outposts | Postos potenciais na metade adversária, apoiados por peão e não expulsáveis por peões; identifica os já ocupados por peça menor |
 | 8 | Espaço | Casas ocupadas/controladas na metade adversária sem ataque de peões rivais e mobilidade média das peças (estimativa geométrica, não lances legais) |
+| 9 | Atividade das peças | Destinos vazios de cavalos, bispos, torres e damas, ponderados por centralidade, apoio de peão e contestação adversária; média por peça para separar atividade de vantagem material |
 
 Cada critério devolve: veredito, métricas, observações, planos para brancas e pretas,
 casas destacadas e setas no tabuleiro. O plano final combina os critérios por peso
 (`analysis/plan.py`) e ordena as ações por relevância.
+
+Em **Atividade**, a camada destaca a peça mais ativa de cada lado e, em laranja,
+as peças com poucas opções úteis. O índice não calcula lances legais nem a
+segurança tática de cada movimento: casas atacadas por peões são descartadas,
+e as contestadas por outras peças recebem peso menor.
 
 ## Indicadores visuais
 
@@ -92,6 +98,7 @@ chess-midgame-planner/
 │   ├── weak_squares.py       # critério 6
 │   ├── outposts.py           # critério 7
 │   ├── space.py              # critério 8
+│   ├── piece_activity.py     # critério 9
 │   ├── board_render.py       # SVG com destaques, setas e dicas de lance
 │   └── plan.py               # consolidação em plano de jogo
 └── tests/
