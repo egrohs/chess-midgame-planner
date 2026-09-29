@@ -131,5 +131,6 @@ chess-midgame-planner/
 
 ## Próximos critérios (maior complexidade)
 
-Bom vs. mau bispo, colunas abertas e semiabertas, iniciativa e peças
-sobrecarregadas.
+Coordenação das peças, rupturas de peões, bom vs. mau bispo, colunas abertas
+e semiabertas, iniciativa e peças sobrecarregadas. Consulte [TODO.md](TODO.md)
+para o escopo pendente de cada critério.
