@@ -43,6 +43,8 @@ LAYER_LABELS = {
     "development": "Desenvolvimento",
     "center": "Centro",
     "pawn_structure": "Estrutura",
+    "weak_squares": "Casas fracas",
+    "outposts": "Outposts",
 }
 
 STANCE_ICONS = {
@@ -152,18 +154,35 @@ def on_square_click() -> None:
 
 # --- Barra lateral -----------------------------------------------------------
 
+def sync_fen_input() -> None:
+    """Espelha o FEN da posição atual no campo de texto.
+
+    O widget tem ``key``, então o Streamlit ignora ``value=`` nos reruns e
+    mantém o valor guardado no ``session_state``. Só sobrescrevemos quando o
+    valor exibido ainda é o último FEN que sincronizamos — assim não apagamos
+    um FEN que o usuário esteja digitando.
+    """
+    current = st.session_state.line.board.fen()
+    shown = st.session_state.get("fen_input")
+    last_synced = st.session_state.get("_fen_synced")
+    if shown is None or shown == last_synced:
+        st.session_state.fen_input = current
+    st.session_state._fen_synced = current
+
+
 with st.sidebar:
     st.subheader("Posição")
     st.selectbox("Exemplos", list(PRESETS), key="preset", on_change=on_preset_change)
 
+    sync_fen_input()
+
     with st.form("fen_form", border=False):
-        fen_text = st.text_area(
-            "Carregar FEN", value=st.session_state.line.board.fen(), height=90, key="fen_input"
-        )
+        fen_text = st.text_area("Carregar FEN", height=90, key="fen_input")
         if st.form_submit_button("Aplicar FEN", icon=":material/input:"):
             try:
                 set_line(line_from_fen(fen_text))
                 st.session_state.status = ("success", "FEN carregado.")
+                st.rerun()
             except ValueError as exc:
                 st.session_state.status = ("error", f"FEN inválido: {exc}")
 
@@ -175,6 +194,7 @@ with st.sidebar:
             try:
                 set_line(line_from_pgn(pgn_text))
                 st.session_state.status = ("success", "PGN carregado.")
+                st.rerun()
             except ValueError as exc:
                 st.session_state.status = ("error", f"PGN inválido: {exc}")
 

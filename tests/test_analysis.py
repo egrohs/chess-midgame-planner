@@ -5,8 +5,10 @@ from analysis import analyze_position, overall_score, render_board
 from analysis.center import classify_center
 from analysis.development import development_score, undeveloped_minors
 from analysis.material import count_material, material_value
+from analysis.outposts import analyze_outposts_for, is_outpost
 from analysis.pawn_majority import count_wing_pawns
 from analysis.pawn_structure import analyze_structure
+from analysis.weak_squares import analyze_weak_squares_for, is_neutralized, is_weak_square
 
 
 def test_material_balanced_at_start():
@@ -101,8 +103,90 @@ def test_analyze_position_runs_all_criteria():
         "development",
         "center",
         "pawn_structure",
+        "weak_squares",
+        "outposts",
     ]
     assert overall_score(results) == pytest.approx(0.0, abs=1e-9)
+
+
+def test_weak_square_detection():
+    # Peão branco em e4 controla d5/f5; d5 não é defendida por peões pretos.
+    board = chess.Board("4k3/8/8/8/4P3/8/8/4K3 w - - 0 1")
+    assert is_weak_square(board, chess.BLACK, chess.D5)
+    # e5 é defendida pelo peão preto de d6? Não há peões pretos: e5 também fraca.
+    assert is_weak_square(board, chess.BLACK, chess.E5)
+    # A casa continua fraca mesmo ocupada por peça própria: a fraqueza é da casa,
+    # não da ocupação. O peão branco de e4 não é defendido por nenhum peão branco.
+    assert is_weak_square(board, chess.WHITE, chess.E4)
+
+
+def test_weak_square_occupied_by_piece_is_still_weak():
+    # Cavalo branco em d5 (casa fraca para as brancas, sem peão que a defenda).
+    board = chess.Board("4k3/8/8/3N4/8/8/8/4K3 w - - 0 1")
+    assert is_weak_square(board, chess.WHITE, chess.D5)
+
+
+def test_weak_square_neutralized_by_defended_piece():
+    # Cavalo branco em d5 defendido pelo bispo de e4 e sem peão branco que defenda
+    # d5 nem peão preto que o ataque: a casa é fraca, mas a fraqueza está
+    # neutralizada na prática pela peça que a ocupa e defende.
+    board = chess.Board("4k3/8/8/3N4/4B3/8/8/4K3 w - - 0 1")
+    assert is_weak_square(board, chess.WHITE, chess.D5)
+    assert is_neutralized(board, chess.WHITE, chess.D5)
+    report = analyze_weak_squares_for(board, chess.WHITE)
+    assert chess.D5 in report.neutralized
+    assert chess.D5 not in report.exploitable
+
+
+def test_weak_square_exploitable_when_piece_undefended():
+    # Cavalo branco em d5 sem defesa: a fraqueza é explorável pelo adversário.
+    board = chess.Board("4k3/8/8/3N4/8/8/8/4K3 w - - 0 1")
+    assert not is_neutralized(board, chess.WHITE, chess.D5)
+    report = analyze_weak_squares_for(board, chess.WHITE)
+    assert chess.D5 in report.exploitable
+
+
+def test_weak_square_covered_by_pawn_is_not_weak():
+    # O peão preto de c7 defende b6 e d6: essas casas não são fracas para as pretas.
+    board = chess.Board("4k3/2p5/8/8/8/8/8/4K3 w - - 0 1")
+    assert not is_weak_square(board, chess.BLACK, chess.B6)
+    assert not is_weak_square(board, chess.BLACK, chess.D6)
+
+
+def test_weak_squares_criterion_scores_control():
+    # Brancas com peão central avançado criam buracos no campo preto.
+    board = chess.Board("4k3/8/8/8/3P4/8/8/4K3 w - - 0 1")
+    result = analyze_position(board)[5]
+    assert result.key == "weak_squares"
+    assert result.score > 0
+
+
+def test_outpost_detection():
+    # Cavalo branco em d5, defendido pelo peão de c4, sem peão preto que o ataque.
+    board = chess.Board("4k3/8/8/3N4/2P5/8/8/4K3 w - - 0 1")
+    assert is_outpost(board, chess.WHITE, chess.D5)
+    report = analyze_outposts_for(board, chess.WHITE)
+    assert chess.D5 in report.outposts
+    assert chess.D5 in report.occupied
+
+
+def test_outpost_expelled_by_pawn_is_not_outpost():
+    # Peão preto em e6 ataca d5: o cavalo poderia ser expulso, não é outpost.
+    board = chess.Board("4k3/8/4p3/3N4/2P5/8/8/4K3 w - - 0 1")
+    assert not is_outpost(board, chess.WHITE, chess.D5)
+
+
+def test_outpost_requires_pawn_support():
+    # Cavalo em d5 sem peão de apoio não configura outpost.
+    board = chess.Board("4k3/8/8/3N4/8/8/8/4K3 w - - 0 1")
+    assert not is_outpost(board, chess.WHITE, chess.D5)
+
+
+def test_outposts_criterion_runs():
+    board = chess.Board("4k3/8/8/3N4/2P5/8/8/4K3 w - - 0 1")
+    result = analyze_position(board)[6]
+    assert result.key == "outposts"
+    assert result.score > 0
 
 
 def test_render_board_produces_svg_with_highlights():

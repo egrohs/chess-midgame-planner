@@ -84,6 +84,19 @@ def square_list(squares) -> str:
     return ", ".join(chess.square_name(sq) for sq in sorted(squares))
 
 
+def pawn_controlled_squares(board: chess.Board, color: chess.Color) -> set[chess.Square]:
+    """Casas atacadas por peões da cor (controle de peão)."""
+    controlled: set[chess.Square] = set()
+    for square in pawns(board, color):
+        controlled |= board.attacks(square)
+    return controlled
+
+
+def pawn_attacks_square(board: chess.Board, color: chess.Color, square: chess.Square) -> bool:
+    """Indica se algum peão da cor ataca a casa dada."""
+    return any(square in board.attacks(pawn) for pawn in pawns(board, color))
+
+
 def has_castled(board: chess.Board, color: chess.Color) -> bool:
     """Heurística: rei já abrigado numa das alas, ainda na fileira inicial."""
     king_square = board.king(color)

@@ -7,6 +7,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 from presets import PRESETS
+from game import handle_setup_click
 
 APP = str(Path(__file__).resolve().parent.parent / "streamlit_app.py")
 
@@ -19,7 +20,7 @@ def run_app() -> AppTest:
 
 def test_app_runs_without_exception():
     at = run_app()
-    assert len(at.tabs) == 5
+    assert len(at.tabs) == 7
     assert at.session_state.mode == "Mover peças"
 
 
@@ -129,3 +130,32 @@ def test_layers_pills_do_not_break_rendering():
     at.pills(key="layers").set_value(["material", "center"]).run()
     assert not at.exception, [e.message for e in at.exception]
     assert at.session_state.layers == ["material", "center"]
+
+
+def test_editing_board_updates_fen_field():
+    """Editar o tabuleiro deve refletir o novo FEN no campo de texto."""
+    at = run_app()
+    at.segmented_control(key="mode").set_value("Montar posição").run()
+
+    line = at.session_state.line
+    at.session_state.line = handle_setup_click(line, chess.E4, "P")
+    at.run()
+
+    assert not at.exception, [e.message for e in at.exception]
+    assert at.text_area(key="fen_input").value == at.session_state.line.board.fen()
+
+
+def test_typed_fen_is_preserved_on_rerun():
+    """Um FEN digitado pelo usuário não deve ser sobrescrito sem mudança de posição."""
+    at = run_app()
+    typed = "8/8/8/8/8/8/8/8 w - - 0 1"
+    at.text_area(key="fen_input").set_value(typed).run()
+    assert at.text_area(key="fen_input").value == typed
+
+
+def test_loading_pgn_updates_fen_field():
+    at = run_app()
+    at.text_area(key="pgn_input").set_value("1. e4 e5 2. Nf3")
+    submit(at, "Aplicar PGN")
+    assert not at.exception, [e.message for e in at.exception]
+    assert at.text_area(key="fen_input").value == at.session_state.line.board.fen()
