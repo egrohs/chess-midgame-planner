@@ -5,7 +5,7 @@ from analysis import CriterionResult, analyze_position, build_plan, overall_scor
 from analysis.center import classify_center
 from analysis.development import development_score, undeveloped_minors
 from analysis.king_safety import analyze_king_safety, analyze_king_safety_for
-from analysis.material import count_material, material_value
+from analysis.material import analyze_material, count_material, material_value
 from analysis.outposts import analyze_outposts_for, is_outpost
 from analysis.pawn_majority import count_wing_pawns
 from analysis.pawn_structure import analyze_structure
@@ -28,6 +28,97 @@ def test_material_detects_extra_rook():
     result = analyze_position(board)[0]
     assert result.score > 0
     assert any("torres" in f for f in result.findings)
+
+
+@pytest.mark.parametrize(
+    "fen,description,white_action,black_action",
+    [
+        (
+            "4k2r/8/8/8/8/8/8/1NB1K3 w - - 0 1",
+            "torre contra bispo e cavalo",
+            "Coordene as duas peças menores",
+            "Ative a torre",
+        ),
+        (
+            "4k2r/8/8/8/8/8/8/1N2KN2 w - - 0 1",
+            "torre contra dois cavalos",
+            "Coordene as duas peças menores",
+            "Ative a torre",
+        ),
+        (
+            "4k2r/8/8/8/8/8/8/2B1KB2 w - - 0 1",
+            "torre contra dois bispos",
+            "Coordene as duas peças menores",
+            "Ative a torre",
+        ),
+        (
+            "r3k2r/8/8/8/8/8/8/3QK3 w - - 0 1",
+            "duas torres contra dama",
+            "Use a dama",
+            "Coordene as duas torres",
+        ),
+        (
+            "4k2r/8/8/8/8/8/8/2B1K3 w - - 0 1",
+            "torre contra bispo (qualidade)",
+            "Busque compensação",
+            "Use a torre",
+        ),
+        (
+            "4k1nr/8/8/8/8/8/8/3QK3 w - - 0 1",
+            "dama contra torre e cavalo",
+            "Use a dama",
+            "Coordene a torre e a peça menor",
+        ),
+        (
+            "4k1n1/8/8/8/8/8/8/2B1K3 w - - 0 1",
+            "bispo contra cavalo",
+            "Procure diagonais",
+            "Busque casas fortes",
+        ),
+    ],
+)
+def test_material_recognizes_asymmetric_exchanges(fen, description, white_action, black_action):
+    result = analyze_material(chess.Board(fen))
+    assert any(description in finding for finding in result.findings)
+    assert result.metrics[-1].value == "1"
+    assert result.white_plans[0].startswith(white_action)
+    assert result.black_plans[0].startswith(black_action)
+    assert "Sem desequilíbrio material" not in result.white_plans
+    plan = build_plan(analyze_position(chess.Board(fen)), chess.WHITE)
+    assert plan[1].action == result.white_plans[0]
+
+
+def test_material_asymmetric_exchange_with_pawns_and_extra_rook():
+    board = chess.Board("r3k2r/pp6/8/8/8/8/P7/3QK3 w - - 0 1")
+    result = analyze_material(board)
+    assert result.metrics[-1].value == "1"
+    assert any("Saldo adicional de peões: 1 para as pretas" in f for f in result.findings)
+
+    board.set_piece_at(chess.A1, chess.Piece(chess.ROOK, chess.WHITE))
+    result = analyze_material(board)
+    assert result.metrics[-1].value == "0"
+    assert not any("duas torres contra dama" in f for f in result.findings)
+
+
+def test_material_does_not_invent_trade_from_same_side_surpluses():
+    board = chess.Board("4k3/8/8/8/8/8/8/RNB1K3 w - - 0 1")
+    assert analyze_material(board).metrics[-1].value == "0"
+    assert analyze_material(chess.Board()).metrics[-1].value == "0"
+
+
+def test_material_does_not_reuse_surplus_in_overlapping_trades():
+    board = chess.Board("r3k2r/8/8/8/8/8/8/1NBQK3 w - - 0 1")
+    result = analyze_material(board)
+    assert result.metrics[-1].value == "1"
+    assert any("duas torres contra dama" in finding for finding in result.findings)
+    assert not any("torre contra bispo" in finding for finding in result.findings)
+
+
+def test_material_pair_of_bishops_gets_priority_plan_even_at_equal_value():
+    board = chess.Board("4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1")
+    result = analyze_material(board)
+    assert result.white_plans[0].startswith("Abra a posição")
+    assert result.black_plans[0].startswith("Restrinja as diagonais")
 
 
 def test_wing_majority_counts():

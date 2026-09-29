@@ -19,7 +19,7 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 
 | # | Critério | O que mede |
 |---|----------|------------|
-| 1 | Material bruto | Contagem e valor das peças, diferenças por tipo, par de bispos |
+| 1 | Material bruto | Contagem e valor das peças, par de bispos, bispo contra cavalo, qualidade, duas peças menores contra torre, duas torres contra dama, dama contra torre e peça menor; planos para os dois lados |
 | 2 | Maioria de peões | Peões por ala (a-c, d-e, f-h) e onde criar um passado |
 | 3 | Desenvolvimento / tempo | Peças menores desenvolvidas, roque, torres conectadas, dama precoce |
 | 4 | Centro aberto/fechado | Peões centrais, cadeias travadas e tensão (aberto, fixo, dinâmico, fechado) |

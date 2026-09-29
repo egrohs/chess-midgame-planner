@@ -69,6 +69,16 @@ def test_invalid_fen_shows_error():
     assert at.session_state.status[0] == "error"
 
 
+def test_material_imbalance_appears_in_plan_and_criterion_tab():
+    at = run_app()
+    at.text_area(key="fen_input").set_value("r3k2r/8/8/8/8/8/8/3QK3 w - - 0 1")
+    submit(at, "Aplicar FEN")
+    assert not at.exception, [e.message for e in at.exception]
+    assert at.tabs[1].label == "2. Material bruto"
+    assert any("duas torres contra dama" in element.value for element in at.markdown)
+    assert any("Use a dama para criar ameaças" in element.value for element in at.markdown)
+
+
 def test_pgn_loads_moves():
     at = run_app()
     at.text_area(key="pgn_input").set_value("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6")
