@@ -95,6 +95,16 @@ def test_setup_mode_shows_palette_and_freezes_position():
     assert line.moves == []
     assert line.board.piece_at(chess.E4) == chess.Piece(chess.PAWN, chess.WHITE)
     assert at.session_state.setup_piece == "P"
+    assert at.segmented_control(key="setup_piece").proto.required
+
+
+def test_setup_palette_remains_required_after_selecting_piece():
+    at = run_app()
+    at.segmented_control(key="mode").set_value("Montar posição").run()
+    at.segmented_control(key="setup_piece").set_value("n").run()
+    assert not at.exception, [e.message for e in at.exception]
+    assert at.segmented_control(key="setup_piece").proto.required
+    assert at.session_state.setup_piece == "n"
 
 
 def test_clear_board_pauses_analysis():

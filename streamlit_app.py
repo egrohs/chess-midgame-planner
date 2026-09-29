@@ -118,7 +118,12 @@ def on_ply_change() -> None:
 
 
 def apply_setup_click(line: GameLine, square: chess.Square) -> None:
-    set_line(handle_setup_click(line, square, st.session_state.setup_piece))
+    symbol = st.session_state.setup_piece
+    if symbol not in SETUP_PALETTE:
+        st.session_state.status = ("error", "Selecione uma peça na paleta antes de editar o tabuleiro.")
+        return
+    set_line(handle_setup_click(line, square, symbol))
+    st.session_state.status = None
 
 
 def apply_play_click(line: GameLine, square: chess.Square) -> None:
@@ -209,6 +214,7 @@ with board_col:
             list(SETUP_PALETTE),
             format_func=lambda symbol: SETUP_PALETTE[symbol],
             key="setup_piece",
+            required=True,
         )
         st.caption("Clique numa casa para colocar a peça; clique de novo na mesma peça para apagar.")
 
