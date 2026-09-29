@@ -23,6 +23,23 @@ WEIGHTS = {
     "worst_piece": 1.0,
 }
 
+# Ordem de revisão do plano, distinta dos pesos da avaliação posicional.
+# Coordenação e rupturas entram aqui quando houver critérios que as meçam.
+PLAN_PRIORITY = (
+    "king_safety",
+    "material",
+    "piece_activity",
+    "development",
+    "worst_piece",
+    "pawn_structure",
+    "center",
+    "weak_squares",
+    "outposts",
+    "pawn_majority",
+    "space",
+)
+PLAN_RANK = {key: rank for rank, key in enumerate(PLAN_PRIORITY)}
+
 
 @dataclass
 class PlanItem:
@@ -53,17 +70,23 @@ def balance_label(score: float) -> str:
 
 
 def build_plan(
-    results: list[CriterionResult], color: chess.Color, limit: int = 6
+    results: list[CriterionResult], color: chess.Color, limit: int | None = None
 ) -> list[PlanItem]:
-    """Ordena os planos por relevância para a cor escolhida."""
+    """Apresenta uma ação por critério na ordem de revisão posicional."""
     ranked = sorted(
         results,
-        key=lambda r: (abs(r.score) * WEIGHTS.get(r.key, 1.0)),
-        reverse=True,
+        key=lambda r: (PLAN_RANK.get(r.key, len(PLAN_RANK)), -abs(r.score)),
     )
 
     items: list[PlanItem] = []
+    seen: set[str] = set()
     for result in ranked:
+        if limit is not None and len(items) >= limit:
+            break
+        action = next((text for text in result.plans_for(color) if text not in seen), None)
+        if action is None:
+            continue
+        seen.add(action)
         edge = result.edge
         if edge is None:
             stance = "equilibrado"
@@ -71,20 +94,8 @@ def build_plan(
             stance = "explorar"
         else:
             stance = "neutralizar"
-        for action in result.plans_for(color):
-            items.append(PlanItem(len(items) + 1, result.title, stance, action))
-
-    # Remove duplicatas mantendo a ordem de prioridade.
-    seen: set[str] = set()
-    unique: list[PlanItem] = []
-    for item in items:
-        if item.action in seen:
-            continue
-        seen.add(item.action)
-        unique.append(PlanItem(len(unique) + 1, item.criterion, item.stance, item.action))
-        if len(unique) >= limit:
-            break
-    return unique
+        items.append(PlanItem(len(items) + 1, result.title, stance, action))
+    return items
 
 
 def summary_line(results: list[CriterionResult], color: chess.Color) -> str:

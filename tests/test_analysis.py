@@ -1,7 +1,7 @@
 import chess
 import pytest
 
-from analysis import analyze_position, overall_score, render_board
+from analysis import CriterionResult, analyze_position, build_plan, overall_score, render_board
 from analysis.center import classify_center
 from analysis.development import development_score, undeveloped_minors
 from analysis.king_safety import analyze_king_safety, analyze_king_safety_for
@@ -10,6 +10,7 @@ from analysis.outposts import analyze_outposts_for, is_outpost
 from analysis.pawn_majority import count_wing_pawns
 from analysis.pawn_structure import analyze_structure
 from analysis.piece_activity import analyze_activity_for, analyze_piece_activity
+from analysis.plan import PLAN_PRIORITY
 from analysis.space import analyze_space, analyze_space_for
 from analysis.weak_squares import analyze_weak_squares_for, is_neutralized, is_weak_square
 from analysis.worst_piece import analyze_worst_piece, assess_pieces
@@ -448,6 +449,57 @@ def test_worst_piece_mirror_and_visuals():
     assert len(result.highlights) == 2
     assert all(board.piece_at(square) is not None for square in result.highlights)
     assert result.white_plans and result.black_plans
+
+
+def test_plan_follows_review_priority_not_score_or_input_order():
+    results = [
+        CriterionResult(
+            key=key,
+            title=key,
+            score=1.0 if key == "space" else 0.0,
+            white_plans=[f"{key} primeira ação", f"{key} segunda ação"],
+            black_plans=[f"pretas {key}"],
+            icon="",
+            verdict="",
+        )
+        for key in reversed(PLAN_PRIORITY)
+    ]
+    plan = build_plan(results, chess.WHITE)
+    assert [item.criterion for item in plan] == list(PLAN_PRIORITY)
+    assert [item.priority for item in plan] == list(range(1, len(PLAN_PRIORITY) + 1))
+    assert [item.action for item in plan] == [
+        f"{key} primeira ação" for key in PLAN_PRIORITY
+    ]
+    assert [item.criterion for item in build_plan(results, chess.BLACK, limit=3)] == list(
+        PLAN_PRIORITY[:3]
+    )
+    assert build_plan(results, chess.WHITE, limit=0) == []
+
+
+def test_plan_includes_all_existing_criteria_and_enemy_worst_piece():
+    results = analyze_position(chess.Board())
+    plan = build_plan(results, chess.WHITE)
+    assert len(plan) == len(PLAN_PRIORITY)
+    assert [item.criterion for item in plan] == [
+        next(result.title for result in results if result.key == key) for key in PLAN_PRIORITY
+    ]
+    assert "adversário" in plan[4].action
+    assert "bispo em c8" in plan[4].action
+    black_plan = build_plan(results, chess.BLACK)
+    assert "bispo em c1" in black_plan[4].action
+
+
+def test_plan_skips_empty_and_duplicate_actions():
+    results = [
+        CriterionResult("material", "Material", "", "", white_plans=["ação", "alternativa"]),
+        CriterionResult("king_safety", "Rei", "", "", white_plans=["ação", "outra"]),
+        CriterionResult("center", "Centro", "", "", white_plans=[]),
+    ]
+    plan = build_plan(results, chess.WHITE)
+    assert [(item.priority, item.criterion, item.action) for item in plan] == [
+        (1, "Rei", "ação"),
+        (2, "Material", "alternativa"),
+    ]
 
 
 def test_render_board_produces_svg_with_highlights():

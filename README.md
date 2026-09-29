@@ -33,7 +33,12 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 
 Cada critério devolve: veredito, métricas, observações, planos para brancas e pretas,
 casas destacadas e setas no tabuleiro. O plano final combina os critérios por peso
-(`analysis/plan.py`) e ordena as ações por relevância.
+(`analysis/plan.py`). O **plano sugerido** usa uma ordem de revisão fixa,
+independente dos pesos da avaliação: segurança do rei, material, atividade,
+desenvolvimento, pior peça (própria e adversária), estrutura de peões, centro,
+casas fracas, outposts, maioria de peões e espaço. Mostra uma ação por critério
+para não ocultar temas de menor prioridade. Coordenação e rupturas ficam de
+fora até haver análise específica; a ordenação não substitui cálculo tático.
 
 Em **Atividade**, a camada destaca a peça mais ativa de cada lado e, em laranja,
 as peças com poucas opções úteis. O índice não calcula lances legais nem a

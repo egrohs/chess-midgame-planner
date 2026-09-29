@@ -401,7 +401,7 @@ with info_col:
         plan_color = chess.BLACK if plan_side_label == "Pretas" else chess.WHITE
 
         with st.container(border=True):
-            st.subheader("Plano de jogo sugerido")
+            st.subheader("Plano de jogo sugerido (por prioridade)")
             st.markdown(f"**{summary_line(results, plan_color)}**")
             plan = build_plan(results, plan_color)
             if not plan:

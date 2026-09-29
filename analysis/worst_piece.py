@@ -120,38 +120,43 @@ def analyze_worst_piece(board: chess.Board) -> CriterionResult:
         reasons = ", ".join(piece.reasons) if piece.reasons else "menor índice relativo de atividade"
         return f"{side}: {piece.label} (índice {piece.score:.2f}) — {reasons}."
 
-    def plan(piece: PieceAssessment | None) -> list[str]:
+    def plan(piece: PieceAssessment | None, opponent: PieceAssessment | None) -> list[str]:
         if piece is None:
-            return ["Sem peças menores ou pesadas; coordene rei e peões."]
-        if "exposta a peão adversário" in piece.reasons or "atacada sem defesa" in piece.reasons:
-            return [
+            action = "Sem peças menores ou pesadas; coordene rei e peões."
+        elif "exposta a peão adversário" in piece.reasons or "atacada sem defesa" in piece.reasons:
+            action = (
                 f"Proteja ou reposicione o {piece.label} antes de ampliar o ataque; "
                 "confirme a segurança tática da manobra."
-            ]
-        if "sem casas úteis acessíveis" in piece.reasons:
+            )
+        elif "sem casas úteis acessíveis" in piece.reasons:
             if piece.piece_type == chess.BISHOP:
-                return [
+                action = (
                     f"Libere a diagonal do {piece.label} antes de desenvolvê-lo, "
                     "sem enfraquecer o próprio rei."
-                ]
-            return [
-                f"Crie uma rota segura para o {piece.label} antes de tentar "
-                "ativá-lo."
-            ]
-        if "ainda na casa inicial" in piece.reasons:
-            return [
+                )
+            else:
+                action = f"Crie uma rota segura para o {piece.label} antes de tentar ativá-lo."
+        elif "ainda na casa inicial" in piece.reasons:
+            action = (
                 f"Desenvolva o {piece.label} para uma casa útil e segura, "
                 "preferencialmente com influência central."
-            ]
-        if "coluna obstruída por peão próprio" in piece.reasons:
-            return [
+            )
+        elif "coluna obstruída por peão próprio" in piece.reasons:
+            action = (
                 f"Melhore a {piece.label}: prepare uma coluna livre ou uma linha "
                 "em que possa atuar sem perder proteção."
-            ]
-        return [
-            f"Melhore o {piece.label} por uma manobra até casas úteis e seguras; "
-            "não confunda o índice posicional com a melhor jogada tática."
-        ]
+            )
+        else:
+            action = (
+                f"Melhore o {piece.label} por uma manobra até casas úteis e seguras; "
+                "não confunda o índice posicional com a melhor jogada tática."
+            )
+        if opponent is not None:
+            action += (
+                f" Observe o {opponent.label} adversário: dificulte sua ativação "
+                "sem criar fraquezas próprias."
+            )
+        return [action]
 
     highlights = {}
     if white_worst is not None:
@@ -180,7 +185,7 @@ def analyze_worst_piece(board: chess.Board) -> CriterionResult:
             "Índices comparam mobilidade útil normalizada por tipo, desenvolvimento, "
             "apoio e exposição; não representam valor material nem análise tática.",
         ],
-        white_plans=plan(white_worst),
-        black_plans=plan(black_worst),
+        white_plans=plan(white_worst, black_worst),
+        black_plans=plan(black_worst, white_worst),
         highlights=highlights,
     )
