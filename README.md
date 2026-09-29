@@ -1,7 +1,18 @@
 # Chess Midgame Planner
 
 Aplicação Streamlit + python-chess para analisar posições de xadrez por critérios
-posicionais e sugerir um plano de jogo, com indicadores visuais no tabuleiro.
+posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicadores visuais.
+
+## Funcionalidades
+
+- **Tabuleiro clicável** (Streamlit Custom Component v2): clique para selecionar uma peça
+  e clique no destino para jogar; os lances legais aparecem destacados.
+- **Modo "Montar posição"**: paleta de peças para colocar/apagar, definir de quem é o lance,
+  limpar o tabuleiro ou voltar à posição inicial.
+- **Navegação de lances**: início / anterior / próximo / fim, desfazer, slider de lance e
+  lista de lances em notação algébrica.
+- **Importar FEN e PGN** e **exportar PGN** da linha jogada.
+- **Camadas visuais** por critério, que pintam casas e desenham setas no tabuleiro.
 
 ## Critérios implementados
 
@@ -24,7 +35,8 @@ casas destacadas e setas no tabuleiro. O plano final combina os critérios por p
 | 🟩 Verde | Vantagem, peça/peão forte, peão passado |
 | 🟥 Vermelho | Fraqueza (peão isolado) ou vantagem das pretas no critério de material |
 | 🟧 Laranja | Atenção: peões dobrados, atrasados, cadeias travadas, peças não desenvolvidas |
-| 🟦 Azul | Tensão de peões e casas de referência |
+| 🟦 Azul | Tensão de peões, casas de referência e destinos legais |
+| 🟨 Amarelo | Casa selecionada e último lance jogado |
 
 ## Como rodar
 
@@ -38,22 +50,33 @@ A aplicação abre em <http://localhost:8501>.
 
 ## Uso
 
-1. Escolha um exemplo na barra lateral ou cole um FEN próprio.
-2. Ative as camadas visuais (pills) para pintar no tabuleiro os destaques de cada critério.
-3. Leia o plano de jogo sugerido para brancas ou pretas.
-4. Explore as abas para ver métricas, observações e o destaque isolado de cada critério.
+1. Escolha um exemplo na barra lateral, cole um FEN ou cole um PGN.
+2. Em **Mover peças**, clique numa peça e depois no destino. Use os botões e o slider
+   para navegar pela partida; escolha a peça de promoção antes de promover um peão.
+3. Em **Montar posição**, selecione uma peça na paleta e clique nas casas
+   (clicar de novo sobre a mesma peça a apaga). Defina de quem é o lance.
+4. Ative as camadas visuais para pintar no tabuleiro os destaques de cada critério.
+5. Leia o plano de jogo sugerido e explore as abas de cada critério.
 
 ## Testes
 
 ```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest tests -q
 ```
+
+Os testes cobrem os critérios de análise, a lógica de partida (navegação, PGN, edição
+de posição, cliques) e a interface com `streamlit.testing.v1.AppTest`, sem navegador.
 
 ## Estrutura
 
 ```
 chess-midgame-planner/
 ├── streamlit_app.py          # interface Streamlit
+├── presets.py                # posições de exemplo
+├── game.py                   # linha de lances, PGN, edição de posição, cliques
+├── components/
+│   └── interactive_board.py  # tabuleiro clicável (Custom Component v2)
 ├── analysis/
 │   ├── types.py              # CriterionResult, Metric, paleta de cores
 │   ├── board_utils.py        # helpers de casas, alas, peões, roque
@@ -62,9 +85,12 @@ chess-midgame-planner/
 │   ├── development.py        # critério 3
 │   ├── center.py             # critério 4
 │   ├── pawn_structure.py     # critério 5
-│   ├── board_render.py       # SVG com destaques e setas
+│   ├── board_render.py       # SVG com destaques, setas e dicas de lance
 │   └── plan.py               # consolidação em plano de jogo
-└── tests/test_analysis.py
+└── tests/
+    ├── test_analysis.py
+    ├── test_game.py
+    └── test_app.py
 ```
 
 ## Próximos critérios (maior complexidade)

@@ -1,6 +1,6 @@
 """Motor de análise posicional do Chess Midgame Planner."""
 
-from analysis.board_render import render_board
+from analysis.board_render import move_hints, render_board
 from analysis.center import analyze_center
 from analysis.development import analyze_development
 from analysis.material import analyze_material
@@ -36,6 +36,7 @@ __all__ = [
     "analyze_position",
     "balance_label",
     "build_plan",
+    "move_hints",
     "overall_score",
     "render_board",
     "summary_line",
