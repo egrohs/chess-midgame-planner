@@ -20,6 +20,7 @@ WEIGHTS = {
     "space": 1.1,
     "piece_activity": 1.2,
     "king_safety": 1.5,
+    "worst_piece": 1.0,
 }
 
 

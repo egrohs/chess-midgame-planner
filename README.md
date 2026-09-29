@@ -29,6 +29,7 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 | 8 | Espaço | Casas ocupadas/controladas na metade adversária sem ataque de peões rivais e mobilidade média das peças (estimativa geométrica, não lances legais) |
 | 9 | Atividade das peças | Destinos vazios de cavalos, bispos, torres e damas, ponderados por centralidade, apoio de peão e contestação adversária; média por peça para separar atividade de vantagem material |
 | 10 | Segurança do rei | Escudo de peões, colunas próximas sem peão próprio, atacantes na zona do rei, xeque e casas de fuga seguras |
+| 11 | Pior peça | Compara peças menores e pesadas de cada lado usando mobilidade útil normalizada por tipo, desenvolvimento, apoio de peão, acesso a colunas e exposição |
 
 Cada critério devolve: veredito, métricas, observações, planos para brancas e pretas,
 casas destacadas e setas no tabuleiro. O plano final combina os critérios por peso
@@ -43,6 +44,11 @@ Em **Segurança do rei**, a camada mostra o escudo, as lacunas à frente do
 rei, casas de fuga e setas dos atacantes. Colunas sem peão próprio só pesam
 quando ainda há torres ou damas adversárias; a contagem de fugas independe
 de quem joga e não substitui o cálculo de mate.
+
+Em **Pior peça**, a camada destaca uma peça de cada lado que mais precisa ser
+melhorada. O índice compara peças de tipos diferentes sem equiparar sua
+mobilidade bruta e sugere desenvolver, proteger ou abrir uma linha conforme
+o motivo da restrição. É uma heurística posicional, não uma análise de trocas.
 
 ## Indicadores visuais
 
@@ -106,6 +112,7 @@ chess-midgame-planner/
 │   ├── space.py              # critério 8
 │   ├── piece_activity.py     # critério 9
 │   ├── king_safety.py        # critério 10
+│   ├── worst_piece.py        # critério 11
 │   ├── board_render.py       # SVG com destaques, setas e dicas de lance
 │   └── plan.py               # consolidação em plano de jogo
 └── tests/

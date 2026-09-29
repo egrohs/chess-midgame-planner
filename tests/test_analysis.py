@@ -12,6 +12,7 @@ from analysis.pawn_structure import analyze_structure
 from analysis.piece_activity import analyze_activity_for, analyze_piece_activity
 from analysis.space import analyze_space, analyze_space_for
 from analysis.weak_squares import analyze_weak_squares_for, is_neutralized, is_weak_square
+from analysis.worst_piece import analyze_worst_piece, assess_pieces
 
 
 def test_material_balanced_at_start():
@@ -111,6 +112,7 @@ def test_analyze_position_runs_all_criteria():
         "space",
         "piece_activity",
         "king_safety",
+        "worst_piece",
     ]
     assert overall_score(results) == pytest.approx(0.0, abs=1e-9)
 
@@ -394,6 +396,57 @@ def test_king_safety_mirror_reverses_score():
     board = chess.Board("4k1r1/8/8/8/8/8/5P1P/6K1 w - - 0 1")
     result = analyze_king_safety(board)
     assert analyze_king_safety(board.mirror()).score == pytest.approx(-result.score)
+    assert result.white_plans and result.black_plans
+
+
+def test_worst_piece_at_start_is_balanced_and_favors_improving_minor():
+    board = chess.Board()
+    white = assess_pieces(board, chess.WHITE)
+    assert white[0].piece_type in (chess.KNIGHT, chess.BISHOP)
+    assert white[0].square in (chess.B1, chess.C1, chess.F1, chess.G1)
+    result = analyze_worst_piece(board)
+    assert result.score == 0
+    assert "Libere a diagonal" in result.white_plans[0]
+    board.turn = chess.BLACK
+    assert analyze_worst_piece(board).score == 0
+
+
+def test_worst_piece_normalizes_mobility_across_types():
+    board = chess.Board("4k3/8/8/8/3N4/8/8/R3K3 w - - 0 1")
+    pieces = assess_pieces(board, chess.WHITE)
+    rook = next(piece for piece in pieces if piece.piece_type == chess.ROOK)
+    knight = next(piece for piece in pieces if piece.piece_type == chess.KNIGHT)
+    assert len(board.attacks(chess.A1)) > len(board.attacks(chess.D4))
+    assert knight.score > rook.score
+    assert pieces[0].square == chess.A1
+
+
+def test_worst_piece_values_pawn_support_and_penalizes_pawn_threat():
+    board = chess.Board("4k3/8/8/5N2/4P3/8/8/4K3 w - - 0 1")
+    supported = assess_pieces(board, chess.WHITE)[0]
+    board.remove_piece_at(chess.E4)
+    unsupported = assess_pieces(board, chess.WHITE)[0]
+    assert supported.score > unsupported.score
+    board.set_piece_at(chess.G6, chess.Piece(chess.PAWN, chess.BLACK))
+    exposed = assess_pieces(board, chess.WHITE)[0]
+    assert exposed.score < unsupported.score
+    assert "exposta a peão adversário" in exposed.reasons
+
+
+def test_worst_piece_no_non_pawn_pieces_is_not_material_penalty():
+    board = chess.Board("4k3/8/8/8/8/8/4P3/4K3 w - - 0 1")
+    result = analyze_worst_piece(board)
+    assert result.score == 0
+    assert not result.highlights
+    assert result.white_plans and result.black_plans
+
+
+def test_worst_piece_mirror_and_visuals():
+    board = chess.Board("4k1nr/5ppp/8/8/3N4/8/5PPP/R3K3 w - - 0 1")
+    result = analyze_worst_piece(board)
+    assert analyze_worst_piece(board.mirror()).score == pytest.approx(-result.score)
+    assert len(result.highlights) == 2
+    assert all(board.piece_at(square) is not None for square in result.highlights)
     assert result.white_plans and result.black_plans
 
 

@@ -13,6 +13,7 @@ from analysis.plan import PlanItem, balance_label, build_plan, overall_score, su
 from analysis.space import analyze_space
 from analysis.types import CriterionResult, Metric
 from analysis.weak_squares import analyze_weak_squares
+from analysis.worst_piece import analyze_worst_piece
 
 CRITERIA = (
     analyze_material,
@@ -25,6 +26,7 @@ CRITERIA = (
     analyze_space,
     analyze_piece_activity,
     analyze_king_safety,
+    analyze_worst_piece,
 )
 
 
@@ -45,6 +47,7 @@ __all__ = [
     "analyze_space",
     "analyze_piece_activity",
     "analyze_king_safety",
+    "analyze_worst_piece",
     "analyze_pawn_majority",
     "analyze_pawn_structure",
     "analyze_position",

@@ -48,6 +48,7 @@ LAYER_LABELS = {
     "space": "Espaço",
     "piece_activity": "Atividade",
     "king_safety": "Segurança do rei",
+    "worst_piece": "Pior peça",
 }
 
 STANCE_ICONS = {
