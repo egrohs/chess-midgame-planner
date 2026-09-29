@@ -8,6 +8,7 @@ from analysis.material import count_material, material_value
 from analysis.outposts import analyze_outposts_for, is_outpost
 from analysis.pawn_majority import count_wing_pawns
 from analysis.pawn_structure import analyze_structure
+from analysis.space import analyze_space, analyze_space_for
 from analysis.weak_squares import analyze_weak_squares_for, is_neutralized, is_weak_square
 
 
@@ -105,6 +106,7 @@ def test_analyze_position_runs_all_criteria():
         "pawn_structure",
         "weak_squares",
         "outposts",
+        "space",
     ]
     assert overall_score(results) == pytest.approx(0.0, abs=1e-9)
 
@@ -218,6 +220,60 @@ def test_outposts_criterion_runs():
     result = analyze_position(board)[6]
     assert result.key == "outposts"
     assert result.score > 0
+
+
+def test_space_is_balanced_at_start_and_independent_of_turn():
+    board = chess.Board()
+    result = analyze_space(board)
+    assert result.score == 0
+    assert not result.highlights
+    assert analyze_space_for(board, chess.WHITE).mobility_per_piece == (
+        analyze_space_for(board, chess.BLACK).mobility_per_piece
+    )
+    board.turn = chess.BLACK
+    assert analyze_space(board).score == result.score
+
+
+def test_space_pawn_advance_gains_safe_territory():
+    board = chess.Board("4k3/8/8/4P3/8/8/8/4K3 w - - 0 1")
+    white = analyze_space_for(board, chess.WHITE)
+    assert {chess.E5, chess.D6, chess.F6} <= white.territory
+    assert {chess.E5, chess.D6, chess.F6} <= white.pawn_territory
+    result = analyze_space(board)
+    assert result.score > 0
+    assert {chess.E5, chess.D6, chess.F6} <= set(result.highlights)
+    assert result.white_plans and result.black_plans
+
+
+def test_space_score_reverses_when_colors_are_swapped():
+    board = chess.Board("4k3/8/8/4P3/8/8/8/4K3 w - - 0 1")
+    flipped = board.mirror()
+    assert analyze_space(flipped).score == -analyze_space(board).score
+    assert {chess.E4, chess.D3, chess.F3} <= analyze_space_for(
+        flipped, chess.BLACK
+    ).territory
+
+
+def test_space_excludes_pawn_contested_and_enemy_occupied_squares():
+    board = chess.Board("r3k3/2p5/8/4P3/8/8/8/R3K3 w - - 0 1")
+    white = analyze_space_for(board, chess.WHITE)
+    assert chess.D6 not in white.territory  # c7 attacks d6
+    assert chess.A8 not in white.territory  # enemy rook occupies a8
+    assert chess.A6 in white.territory  # rook controls empty enemy territory
+
+
+def test_space_mobility_decreases_when_enemy_pawn_restricts_piece():
+    board = chess.Board("4k3/8/6p1/8/3N4/8/8/4K3 w - - 0 1")
+    with_pawn = analyze_space_for(board, chess.WHITE)
+    board.remove_piece_at(chess.G6)
+    without_pawn = analyze_space_for(board, chess.WHITE)
+    assert with_pawn.mobility == without_pawn.mobility - 1
+    assert with_pawn.piece_count == without_pawn.piece_count == 1
+
+
+def test_space_mobility_excludes_friendly_occupied_targets():
+    board = chess.Board("4k3/8/8/8/3N4/8/2P5/4K3 w - - 0 1")
+    assert analyze_space_for(board, chess.WHITE).mobility == 7
 
 
 def test_render_board_produces_svg_with_highlights():

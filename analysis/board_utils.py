@@ -88,7 +88,7 @@ def pawn_controlled_squares(board: chess.Board, color: chess.Color) -> set[chess
     """Casas atacadas por peões da cor (controle de peão)."""
     controlled: set[chess.Square] = set()
     for square in pawns(board, color):
-        controlled |= board.attacks(square)
+        controlled.update(board.attacks(square))
     return controlled
 
 

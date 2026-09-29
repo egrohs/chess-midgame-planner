@@ -26,6 +26,7 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 | 5 | Estrutura básica de peões | Isolados, dobrados, atrasados e passados |
 | 6 | Casas fracas | Casas da 3ª e 4ª fileiras próprias que os peões não podem mais defender; distingue fraqueza neutralizada de explorável |
 | 7 | Outposts | Postos potenciais na metade adversária, apoiados por peão e não expulsáveis por peões; identifica os já ocupados por peça menor |
+| 8 | Espaço | Casas ocupadas/controladas na metade adversária sem ataque de peões rivais e mobilidade média das peças (estimativa geométrica, não lances legais) |
 
 Cada critério devolve: veredito, métricas, observações, planos para brancas e pretas,
 casas destacadas e setas no tabuleiro. O plano final combina os critérios por peso
@@ -90,6 +91,7 @@ chess-midgame-planner/
 │   ├── pawn_structure.py     # critério 5
 │   ├── weak_squares.py       # critério 6
 │   ├── outposts.py           # critério 7
+│   ├── space.py              # critério 8
 │   ├── board_render.py       # SVG com destaques, setas e dicas de lance
 │   └── plan.py               # consolidação em plano de jogo
 └── tests/
@@ -100,5 +102,5 @@ chess-midgame-planner/
 
 ## Próximos critérios (maior complexidade)
 
-Bom vs. mau bispo, colunas abertas e semiabertas, segurança do rei, espaço,
+Bom vs. mau bispo, colunas abertas e semiabertas, segurança do rei,
 iniciativa e peças sobrecarregadas.

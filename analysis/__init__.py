@@ -8,6 +8,7 @@ from analysis.outposts import analyze_outposts
 from analysis.pawn_majority import analyze_pawn_majority
 from analysis.pawn_structure import analyze_pawn_structure
 from analysis.plan import PlanItem, balance_label, build_plan, overall_score, summary_line
+from analysis.space import analyze_space
 from analysis.types import CriterionResult, Metric
 from analysis.weak_squares import analyze_weak_squares
 
@@ -19,6 +20,7 @@ CRITERIA = (
     analyze_pawn_structure,
     analyze_weak_squares,
     analyze_outposts,
+    analyze_space,
 )
 
 
@@ -36,6 +38,7 @@ __all__ = [
     "analyze_development",
     "analyze_material",
     "analyze_outposts",
+    "analyze_space",
     "analyze_pawn_majority",
     "analyze_pawn_structure",
     "analyze_position",

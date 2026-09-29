@@ -45,6 +45,7 @@ LAYER_LABELS = {
     "pawn_structure": "Estrutura",
     "weak_squares": "Casas fracas",
     "outposts": "Outposts",
+    "space": "Espaço",
 }
 
 STANCE_ICONS = {

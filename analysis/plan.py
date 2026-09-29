@@ -17,6 +17,7 @@ WEIGHTS = {
     "pawn_structure": 1.2,
     "weak_squares": 1.1,
     "outposts": 1.1,
+    "space": 1.1,
 }
 
 
