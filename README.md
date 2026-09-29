@@ -12,7 +12,8 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 - **Navegação de lances**: início / anterior / próximo / fim, desfazer, slider de lance e
   lista de lances em notação algébrica.
 - **Importar FEN e PGN** e **exportar PGN** da linha jogada.
-- **Camadas visuais** por critério, que pintam casas e desenham setas no tabuleiro.
+- **Camadas visuais** por critério, que pintam casas e desenham setas no tabuleiro;
+  estrutura, casas fracas e outposts aparecem inicialmente.
 
 ## Critérios implementados
 
@@ -23,8 +24,8 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 | 3 | Desenvolvimento / tempo | Peças menores desenvolvidas, roque, torres conectadas, dama precoce |
 | 4 | Centro aberto/fechado | Peões centrais, cadeias travadas e tensão (aberto, fixo, dinâmico, fechado) |
 | 5 | Estrutura básica de peões | Isolados, dobrados, atrasados e passados |
-| 6 | Casas fracas | Casa que os peões não defendem (ocupada ou não); distingue fraqueza neutralizada por peça própria de fraqueza explorável |
-| 7 | Outposts | Casa fraca para o adversário + apoio de peão + não expulsável por peões + ocupável por peça menor |
+| 6 | Casas fracas | Casas da 3ª e 4ª fileiras próprias que os peões não podem mais defender; distingue fraqueza neutralizada de explorável |
+| 7 | Outposts | Postos potenciais na metade adversária, apoiados por peão e não expulsáveis por peões; identifica os já ocupados por peça menor |
 
 Cada critério devolve: veredito, métricas, observações, planos para brancas e pretas,
 casas destacadas e setas no tabuleiro. O plano final combina os critérios por peso

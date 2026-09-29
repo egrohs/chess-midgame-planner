@@ -1,13 +1,13 @@
-"""Critério 7 — Outposts (casa fraca + possibilidade de ocupação + expulsão).
+"""Critério 7 — Outposts (casa fraca + apoio de peão + expulsão).
 
 Um *outpost* é uma casa na metade adversária que:
 
 1. é uma casa fraca para o adversário (ele não a defende com peões);
-2. pode ser ocupada por uma peça menor nossa (cavalo de preferência);
-3. é defendida por um peão nosso;
-4. não pode ser atacada/expulsada por peões inimigos.
+2. é defendida por um peão nosso;
+3. não pode ser atacada/expulsada por peões inimigos.
 
-Quanto mais avançada e central a casa, mais valioso o outpost.
+A casa é um posto potencial mesmo sem peça menor próxima. Quanto mais avançada
+e central, mais valioso; distingue-se o posto já ocupado por peça menor.
 """
 
 from __future__ import annotations
@@ -16,14 +16,7 @@ from dataclasses import dataclass, field
 
 import chess
 
-from analysis.board_utils import (
-    CENTER_FILES,
-    advance_square,
-    pawn_attacks_square,
-    pawns,
-    relative_rank,
-    square_list,
-)
+from analysis.board_utils import pawn_attacks_square, relative_rank, square_list
 from analysis.types import BAD, FILL, GOOD, INFO, WARN, Arrow, CriterionResult, Metric, clamp
 from analysis.weak_squares import is_weak_square
 
@@ -61,19 +54,8 @@ def _can_be_expelled_by_pawn(
     return pawn_attacks_square(board, not color, square)
 
 
-def _can_be_occupied(board: chess.Board, color: chess.Color, square: chess.Square) -> bool:
-    """Há uma peça menor nossa capaz de chegar à casa (ou já lá está)."""
-    piece = board.piece_at(square)
-    if piece is not None:
-        return piece.color == color and piece.piece_type in (chess.KNIGHT, chess.BISHOP)
-    for minor in list(board.pieces(chess.KNIGHT, color)) + list(board.pieces(chess.BISHOP, color)):
-        if square in board.attacks(minor):
-            return True
-    return False
-
-
 def is_outpost(board: chess.Board, color: chess.Color, square: chess.Square) -> bool:
-    """Casa na metade adversária, fraca para ele, apoiada por peão e não expulsável."""
+    """Posto potencial na metade adversária, apoiado e não expulsável por peões."""
     if relative_rank(square, color) < ENEMY_HALF_RANK:
         return False
     if not is_weak_square(board, not color, square):
@@ -82,7 +64,7 @@ def is_outpost(board: chess.Board, color: chess.Color, square: chess.Square) -> 
         return False
     if _can_be_expelled_by_pawn(board, color, square):
         return False
-    return _can_be_occupied(board, color, square)
+    return True
 
 
 def analyze_outposts_for(board: chess.Board, color: chess.Color) -> OutpostReport:
@@ -91,12 +73,16 @@ def analyze_outposts_for(board: chess.Board, color: chess.Color) -> OutpostRepor
         if not is_outpost(board, color, square):
             continue
         report.outposts.append(square)
-        if chess.square_file(square) in CENTER_FILES:
+        if 2 <= chess.square_file(square) <= 5:
             report.central.append(square)
         if relative_rank(square, color) >= ADVANCED_RANK:
             report.advanced.append(square)
         piece = board.piece_at(square)
-        if piece is not None and piece.color == color:
+        if (
+            piece is not None
+            and piece.color == color
+            and piece.piece_type in (chess.KNIGHT, chess.BISHOP)
+        ):
             report.occupied.append(square)
     return report
 
@@ -109,13 +95,13 @@ def _weight(report: OutpostReport) -> float:
 def _describe(report: OutpostReport, side: str) -> list[str]:
     lines = []
     if report.outposts:
-        lines.append(f"{side}: outposts disponíveis em {square_list(report.outposts)}.")
+        lines.append(f"{side}: outposts potenciais em {square_list(report.outposts)}.")
     if report.central:
         lines.append(f"{side}: outposts centrais em {square_list(report.central)}.")
     if report.occupied:
         lines.append(f"{side}: outposts já ocupados por peça menor em {square_list(report.occupied)}.")
     if not lines:
-        lines.append(f"{side}: nenhum outpost disponível no momento.")
+        lines.append(f"{side}: nenhum outpost potencial no momento.")
     return lines
 
 
@@ -153,8 +139,8 @@ def analyze_outposts(board: chess.Board) -> CriterionResult:
     def add_plans(report: OutpostReport, mine: list[str], theirs: list[str]) -> None:
         if report.outposts:
             mine.append(
-                f"Ocupe o(s) outpost(s) em {square_list(report.outposts)} com um cavalo: "
-                "a peça fica forte e não pode ser expulsa por peões."
+                f"Planeje ocupar o(s) outpost(s) em {square_list(report.outposts)} com um cavalo: "
+                "são postos potenciais, não necessariamente acessíveis agora."
             )
             theirs.append(
                 f"Impeça a ocupação dos outposts adversários em {square_list(report.outposts)}: "

@@ -12,7 +12,9 @@ A ocupação, porém, muda a *importância prática* da fraqueza:
   enquanto a peça permanecer ali);
 * caso contrário, a casa fraca é um **alvo explorável** pelo adversário.
 
-Quanto mais avançada e mais central a casa, mais grave é a fraqueza.
+São consideradas as casas da terceira e quarta fileiras do lado defensor,
+onde uma peça adversária pode se instalar. Quanto mais central a casa, mais
+grave é a fraqueza.
 """
 
 from __future__ import annotations
@@ -22,7 +24,6 @@ from dataclasses import dataclass, field
 import chess
 
 from analysis.board_utils import (
-    CENTER_FILES,
     advance_square,
     pawn_attacks_square,
     pawns,
@@ -31,11 +32,10 @@ from analysis.board_utils import (
 )
 from analysis.types import BAD, FILL, GOOD, INFO, WARN, Arrow, CriterionResult, Metric, clamp
 
-#: Fileiras relativas (0 = casa inicial) a partir das quais a fraqueza pesa mais.
+#: Fileiras relativas (0 = casa inicial) consideradas no campo do defensor.
 ADVANCED_RANK = 3
-#: Fileira relativa mínima para a casa ser considerada relevante. Casas muito
-#: recuadas (fileira inicial) raramente são exploráveis e só geram ruído.
 MIN_RANK = 2
+MAX_RANK = 3
 
 
 @dataclass
@@ -84,7 +84,7 @@ def is_weak_square(board: chess.Board, color: chess.Color, square: chess.Square)
     mesmo estando ocupada. Use :func:`is_neutralized` para saber se a fraqueza
     tem importância prática.
     """
-    if relative_rank(square, color) < MIN_RANK:
+    if not MIN_RANK <= relative_rank(square, color) <= MAX_RANK:
         return False
     return not _can_be_defended_by_pawn(board, color, square)
 
@@ -117,7 +117,7 @@ def analyze_weak_squares_for(board: chess.Board, color: chess.Color) -> WeakSqua
         if not is_weak_square(board, color, square):
             continue
         report.weak.append(square)
-        if chess.square_file(square) in CENTER_FILES:
+        if 2 <= chess.square_file(square) <= 5:
             report.central.append(square)
         if relative_rank(square, color) >= ADVANCED_RANK:
             report.advanced.append(square)
@@ -197,7 +197,7 @@ def analyze_weak_squares(board: chess.Board) -> CriterionResult:
     # Sinaliza as casas fracas mais perigosas com uma seta de ocupação.
     for report, color in ((white, chess.WHITE), (black, chess.BLACK)):
         for square in report.exploitable:
-            if chess.square_file(square) in CENTER_FILES:
+            if 2 <= chess.square_file(square) <= 5:
                 arrows.append(Arrow(square, advance_square(square, color, 1), FILL[INFO]))
 
     findings = _describe(white, "Brancas") + _describe(black, "Pretas")

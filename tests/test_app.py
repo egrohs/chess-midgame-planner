@@ -127,6 +127,7 @@ def test_setup_turn_toggle():
 
 def test_layers_pills_do_not_break_rendering():
     at = run_app()
+    assert at.session_state.layers == ["pawn_structure", "weak_squares", "outposts"]
     at.pills(key="layers").set_value(["material", "center"]).run()
     assert not at.exception, [e.message for e in at.exception]
     assert at.session_state.layers == ["material", "center"]

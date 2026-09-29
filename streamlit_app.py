@@ -339,7 +339,7 @@ with board_col:
         list(LAYER_LABELS),
         format_func=lambda key: LAYER_LABELS[key],
         selection_mode="multi",
-        default=["pawn_structure"],
+        default=["pawn_structure", "weak_squares", "outposts"],
         key="layers",
         help="Escolha quais critérios pintam casas e setas no tabuleiro.",
     )
