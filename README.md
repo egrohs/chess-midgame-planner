@@ -15,7 +15,7 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 - **Camadas visuais** por critério, que pintam casas e desenham setas no tabuleiro;
   estrutura, casas fracas e outposts aparecem inicialmente.
 
-## Critérios implementados
+## Critérios implementados (ordem de implementação)
 
 | # | Critério | O que mede |
 |---|----------|------------|
@@ -39,6 +39,9 @@ desenvolvimento, pior peça (própria e adversária), estrutura de peões, centr
 casas fracas, outposts, maioria de peões e espaço. Mostra uma ação por critério
 para não ocultar temas de menor prioridade. Coordenação e rupturas ficam de
 fora até haver análise específica; a ordenação não substitui cálculo tático.
+As **camadas visuais** e as abas de **critérios analisados** seguem essa
+mesma ordem de prioridades; os números das abas indicam essa ordem, não a
+ordem histórica de implementação da tabela acima.
 
 Em **Atividade**, a camada destaca a peça mais ativa de cada lado e, em laranja,
 as peças com poucas opções úteis. O índice não calcula lances legais nem a

@@ -14,6 +14,7 @@ from analysis import (
     render_board,
     summary_line,
 )
+from analysis.plan import PLAN_RANK
 from components import interactive_board
 from game import (
     GameLine,
@@ -340,7 +341,7 @@ with board_col:
 
     st.pills(
         "Camadas visuais",
-        list(LAYER_LABELS),
+        sorted(LAYER_LABELS, key=lambda key: PLAN_RANK.get(key, len(PLAN_RANK))),
         format_func=lambda key: LAYER_LABELS[key],
         selection_mode="multi",
         default=["pawn_structure", "weak_squares", "outposts"],
@@ -416,8 +417,11 @@ if results:
     st.divider()
     st.subheader("Critérios analisados")
 
-    tabs = st.tabs([f"{index + 1}. {result.title}" for index, result in enumerate(results)])
-    for tab, result in zip(tabs, results):
+    display_results = sorted(
+        results, key=lambda result: PLAN_RANK.get(result.key, len(PLAN_RANK))
+    )
+    tabs = st.tabs([f"{index + 1}. {result.title}" for index, result in enumerate(display_results)])
+    for tab, result in zip(tabs, display_results):
         with tab:
             edge = result.edge
             if edge is None:
