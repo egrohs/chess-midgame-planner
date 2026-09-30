@@ -111,6 +111,19 @@ def test_navigation_buttons_change_ply():
     assert at.session_state.line.length == 2
 
 
+def test_new_game_starts_two_player_game_from_initial_position():
+    at = run_app()
+    at.text_area(key="pgn_input").set_value("1. e4 e5")
+    submit(at, "Aplicar PGN")
+
+    at.button(key="new_game").click().run()
+
+    assert not at.exception, [e.message for e in at.exception]
+    assert at.session_state.mode == "Mover peças"
+    assert at.session_state.line.moves == []
+    assert at.session_state.line.board.fen() == chess.STARTING_FEN
+
+
 def test_ply_slider_navigates():
     at = run_app()
     at.text_area(key="pgn_input").set_value("1. e4 e5 2. Nf3 Nc6")

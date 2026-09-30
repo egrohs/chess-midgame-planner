@@ -164,6 +164,14 @@ def test_play_click_selects_then_moves():
     selected = handle_play_click(line, selected, chess.E4)
     assert selected is None
     assert line.moves == ["e2e4"]
+    assert line.board.turn == chess.BLACK
+
+    selected = handle_play_click(line, None, chess.E7)
+    assert selected == chess.E7
+    selected = handle_play_click(line, selected, chess.E5)
+    assert selected is None
+    assert line.moves == ["e2e4", "e7e5"]
+    assert line.board.turn == chess.WHITE
 
 
 def test_play_click_ignores_opponent_piece():

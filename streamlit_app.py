@@ -105,6 +105,12 @@ def on_preset_change() -> None:
     st.session_state.status = None
 
 
+def on_new_game() -> None:
+    set_line(GameLine(root_fen=chess.STARTING_FEN))
+    st.session_state.mode = PLAY_MODE
+    st.session_state.status = None
+
+
 def on_mode_change() -> None:
     """Ao entrar no modo de edição, congela a posição atual como nova raiz."""
     st.session_state.selected = None
@@ -258,7 +264,17 @@ with board_col:
                 set_line(GameLine(root_fen=chess.STARTING_FEN))
                 st.rerun()
     else:
+        st.caption(
+            "Partida local para 2 jogadores: Brancas e Pretas alternam os lances. "
+            "Clique numa peça e depois na casa de destino."
+        )
         with st.container(horizontal=True):
+            st.button(
+                "Nova partida",
+                icon=":material/restart_alt:",
+                key="new_game",
+                on_click=on_new_game,
+            )
             if st.button(
                 "", icon=":material/first_page:", help="Início", disabled=line.ply == 0,
                 key="nav_first",
