@@ -6,6 +6,7 @@ from game import (
     clear_board,
     edit_square,
     handle_play_click,
+    handle_play_move,
     handle_setup_click,
     line_from_fen,
     line_from_pgn,
@@ -200,6 +201,29 @@ def test_play_click_cancels_on_empty_illegal_target():
 def test_play_click_promotes_with_chosen_piece():
     line = GameLine(root_fen="8/4P3/8/8/8/8/8/4K2k w - - 0 1")
     handle_play_click(line, chess.E7, chess.E8, promotion=chess.ROOK)
+    assert line.moves == ["e7e8r"]
+
+
+def test_play_drag_moves_piece_and_switches_turn():
+    line = GameLine()
+    assert handle_play_move(line, chess.E2, chess.E4)
+    assert line.moves == ["e2e4"]
+    assert line.board.turn == chess.BLACK
+
+    assert handle_play_move(line, chess.E7, chess.E5)
+    assert line.moves == ["e2e4", "e7e5"]
+    assert line.board.turn == chess.WHITE
+
+
+def test_play_drag_rejects_illegal_move():
+    line = GameLine()
+    assert not handle_play_move(line, chess.E2, chess.E5)
+    assert line.moves == []
+
+
+def test_play_drag_promotes_with_chosen_piece():
+    line = GameLine(root_fen="8/4P3/8/8/8/8/8/4K2k w - - 0 1")
+    assert handle_play_move(line, chess.E7, chess.E8, promotion=chess.ROOK)
     assert line.moves == ["e7e8r"]
 
 

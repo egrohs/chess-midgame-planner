@@ -20,6 +20,7 @@ from game import (
     GameLine,
     clear_board,
     handle_play_click,
+    handle_play_move,
     handle_setup_click,
     line_from_fen,
     line_from_pgn,
@@ -151,12 +152,34 @@ def apply_play_click(line: GameLine, square: chess.Square) -> None:
 def on_square_click() -> None:
     """Callback do componente: roda antes do corpo do script."""
     payload = getattr(st.session_state.get(BOARD_KEY), "square", None)
-    name = payload.get("square") if isinstance(payload, dict) else None
-    if not name:
+    if not isinstance(payload, dict):
         return
 
-    square = chess.parse_square(name)
     line: GameLine = st.session_state.line
+    from_name = payload.get("from")
+    to_name = payload.get("to")
+    if isinstance(from_name, str) and isinstance(to_name, str):
+        if (
+            st.session_state.mode != PLAY_MODE
+            or from_name not in chess.SQUARE_NAMES
+            or to_name not in chess.SQUARE_NAMES
+        ):
+            return
+        moved = handle_play_move(
+            line,
+            chess.parse_square(from_name),
+            chess.parse_square(to_name),
+            promotion=st.session_state.promotion,
+        )
+        if moved:
+            st.session_state.selected = None
+            st.session_state.status = None
+        return
+
+    name = payload.get("square")
+    if not isinstance(name, str) or name not in chess.SQUARE_NAMES:
+        return
+    square = chess.parse_square(name)
     if st.session_state.mode == SETUP_MODE:
         apply_setup_click(line, square)
     else:
@@ -352,6 +375,7 @@ with board_col:
             orientation=orientation,
             selected=selected,
             size=board_size,
+            allow_drag=st.session_state.mode == PLAY_MODE,
             on_square_change=on_square_click,
         )
 

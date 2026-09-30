@@ -244,3 +244,17 @@ def handle_play_click(
     # Clique em outra peça própria troca a seleção; nos demais casos, cancela.
     piece = board.piece_at(square)
     return square if piece is not None and piece.color == board.turn else None
+
+
+def handle_play_move(
+    line: GameLine,
+    from_square: chess.Square,
+    to_square: chess.Square,
+    promotion: chess.PieceType = chess.QUEEN,
+) -> bool:
+    """Aplica um lance legal iniciado por arrastar uma peça até outra casa."""
+    move = line.legal_move(from_square, to_square, promotion=promotion)
+    if move is None:
+        return False
+    line.push(move)
+    return True

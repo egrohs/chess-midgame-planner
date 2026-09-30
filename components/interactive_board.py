@@ -83,6 +83,7 @@ export default function (component) {
   const svg = data?.svg ?? ""
   const orientation = data?.orientation === "black" ? "black" : "white"
   const readonly = Boolean(data?.readonly)
+  const allowDrag = Boolean(data?.allow_drag)
   const selected = data?.selected ?? null
   const offsetPct = Number(data?.offset_pct ?? 0)
   const boardPct = 100 - 2 * offsetPct
@@ -127,6 +128,7 @@ export default function (component) {
 
   for (const cell of grid.children) {
     cell.dataset.selected = String(cell.dataset.square === selected)
+    cell.draggable = allowDrag && !readonly
   }
 
   const emit = (name) => {
@@ -134,9 +136,47 @@ export default function (component) {
     setTriggerValue("square", { square: name, nonce: Date.now() })
   }
 
+  let draggedSquare = null
+  let suppressClickUntil = 0
+
   grid.onclick = (event) => {
+    if (Date.now() < suppressClickUntil) return
     const cell = event.target.closest(".cmp-cell")
     if (cell) emit(cell.dataset.square)
+  }
+
+  grid.ondragstart = (event) => {
+    const cell = event.target.closest(".cmp-cell")
+    if (!allowDrag || readonly || !cell) {
+      event.preventDefault()
+      return
+    }
+    draggedSquare = cell.dataset.square
+    if (event.dataTransfer) {
+      event.dataTransfer.setData("text/plain", draggedSquare)
+      event.dataTransfer.effectAllowed = "move"
+    }
+  }
+
+  grid.ondragover = (event) => {
+    if (draggedSquare && event.target.closest(".cmp-cell")) event.preventDefault()
+  }
+
+  grid.ondrop = (event) => {
+    const cell = event.target.closest(".cmp-cell")
+    if (!draggedSquare || !cell) return
+    event.preventDefault()
+    const from = event.dataTransfer?.getData("text/plain") || draggedSquare
+    const to = cell.dataset.square
+    if (from !== to) {
+      setTriggerValue("square", { from, to, nonce: Date.now() })
+      suppressClickUntil = Date.now() + 400
+    }
+    draggedSquare = null
+  }
+
+  grid.ondragend = () => {
+    draggedSquare = null
   }
 
   grid.onkeydown = (event) => {
@@ -149,6 +189,10 @@ export default function (component) {
 
   return () => {
     grid.onclick = null
+    grid.ondragstart = null
+    grid.ondragover = null
+    grid.ondrop = null
+    grid.ondragend = null
     grid.onkeydown = null
   }
 }
@@ -173,6 +217,7 @@ def interactive_board(
     selected: chess.Square | None = None,
     size: int = 480,
     readonly: bool = False,
+    allow_drag: bool = True,
     on_square_change: Callable[[], None] | None = None,
 ):
     """Mostra o tabuleiro e devolve a casa clicada em ``result.square``."""
@@ -190,6 +235,7 @@ def interactive_board(
             "offset_pct": 100 * BOARD_MARGIN / FULL_SIZE,
             "size": size,
             "readonly": readonly,
+            "allow_drag": allow_drag,
         },
         on_square_change=on_square_change,
     )

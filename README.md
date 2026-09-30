@@ -5,8 +5,8 @@ posicionais e sugerir um plano de jogo, com **tabuleiro interativo** e indicador
 
 ## Funcionalidades
 
-- **Tabuleiro clicável** (Streamlit Custom Component v2): clique para selecionar uma peça
-  e clique no destino para jogar; os lances legais aparecem destacados.
+- **Tabuleiro interativo** (Streamlit Custom Component v2): clique para selecionar uma peça
+  e clique no destino, ou arraste a peça até a casa de destino para jogar; os lances legais aparecem destacados.
 - **Modo "Montar posição"**: paleta de peças para colocar/apagar, definir de quem é o lance,
   limpar o tabuleiro ou voltar à posição inicial.
 - **Navegação de lances**: início / anterior / próximo / fim, desfazer, slider de lance e
@@ -82,9 +82,9 @@ A aplicação abre em <http://localhost:8501>.
 
 1. Escolha um exemplo na barra lateral, cole um FEN ou cole um PGN.
 2. Em **Mover peças**, dois jogadores podem alternar os lances no mesmo tabuleiro:
-   clique numa peça e depois no destino. Use **Nova partida** para começar da posição
-   inicial; use os botões e o slider para navegar pela partida e escolha a peça de
-   promoção antes de promover um peão.
+   clique numa peça e depois no destino ou arraste-a até a casa desejada. Use **Nova
+   partida** para começar da posição inicial; use os botões e o slider para navegar
+   pela partida e escolha a peça de promoção antes de promover um peão.
 3. Em **Montar posição**, selecione uma peça na paleta e clique nas casas
    (clicar de novo sobre a mesma peça a apaga). Defina de quem é o lance.
 4. Ative as camadas visuais para pintar no tabuleiro os destaques de cada critério.
